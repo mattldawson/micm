@@ -29,7 +29,7 @@
 
     end subroutine OdeSolver_init
 
-    subroutine OdeSolver_run( this, Y, Tstart, Tend, T, &
+    subroutine OdeSolver_run( this, AbsTolScalingFactor, Y, Tstart, Tend, T, &
                               theKinetics, istatus, rstatus, Ierr )
 
       use kinetics_module, only : kinetics_type
@@ -41,6 +41,7 @@
       integer, intent(out)  :: Ierr
       integer, optional, intent(inout)  :: istatus(:)
       real(kind_phys), optional, intent(inout) :: rstatus(:)
+      real(kind_phys), optional, intent(in)  :: AbsTolScalingFactor
       real(kind_phys),        intent(inout)  :: Y(:)
       real(kind_phys), optional, intent(out) :: T
       real(kind_phys), optional, intent(in)  :: Tstart

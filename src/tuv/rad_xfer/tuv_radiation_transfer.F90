@@ -39,8 +39,11 @@ subroutine tuv_radiation_transfer_init( realkind, errmsg, errflg )
 !> \section arg_table_tuv_radiation_transfer_run Argument Table
 !! \htmlinclude tuv_radiation_transfer_run.html
 !!
-  subroutine tuv_radiation_transfer_run( nlayer, tuv_n_wavelen, zenith, albedo, press_mid, press_top, alt, temp, &
-       o3vmr, so2vmr, no2vmr, cldfrc, cldwat, dto2, radfld, errmsg, errflg )
+  subroutine tuv_radiation_transfer_run( nlayer, tuv_n_wavelen, zenith, &
+      albedo, press_mid, press_top, alt, temp, &
+      O3_number_density_column__num_m3, SO2_number_density_column__num_m3, &
+      NO2_number_density_column__num_m3, number_density_air__num_m3, &
+      cldfrc, cldwat, dto2, radfld, errmsg, errflg )
 
     use tuv_subs,         only: tuv_radfld
     use wavelength_grid,  only: nwave, wl, wc
@@ -58,9 +61,10 @@ subroutine tuv_radiation_transfer_init( realkind, errmsg, errflg )
     real(kind_phys),  intent(in)  :: press_top
     real(kind_phys),  intent(in)  :: alt(:)  ! m
     real(kind_phys),  intent(in)  :: temp(:) ! K
-    real(kind_phys),  intent(in)  :: o3vmr(:)
-    real(kind_phys),  intent(in)  :: so2vmr(:)
-    real(kind_phys),  intent(in)  :: no2vmr(:)
+    real(kind_phys),  intent(in)  :: O3_number_density_column__num_m3(:)
+    real(kind_phys),  intent(in)  :: SO2_number_density_column__num_m3(:)
+    real(kind_phys),  intent(in)  :: NO2_number_density_column__num_m3(:)
+    real(kind_phys),  intent(in)  :: number_density_air__num_m3
     real(kind_phys),  intent(in)  :: cldfrc(:)
     real(kind_phys),  intent(in)  :: cldwat(:) ! cld water content (g/m3)
     real(kind_phys),  intent(in)  :: dto2(:,:)
@@ -125,9 +129,15 @@ subroutine tuv_radiation_transfer_init( realkind, errmsg, errflg )
     do k=1,nlayer-1
        kk=nlayer-1-k+1
        aircol(k) = 10._rk*dpress(k)*R/(kboltz*g)
-       o3col(k)  = 0.5_rk*(o3vmr(kk)+o3vmr(kk+1))*aircol(k)
-       so2col(k) = 0.5_rk*(so2vmr(kk)+so2vmr(kk+1))*aircol(k)
-       no2col(k) = 0.5_rk*(no2vmr(kk)+no2vmr(kk+1))*aircol(k)
+       o3col(k)  = 0.5_rk*(O3_number_density_column__num_m3(kk) + &
+                           O3_number_density_column__num_m3(kk+1)) * &
+                           aircol(k) / number_density_air__num_m3
+       so2col(k) = 0.5_rk*(SO2_number_density_column__num_m3(kk) + &
+                           SO2_number_density_column__num_m3(kk+1)) * &
+                           aircol(k) / number_density_air__num_m3
+       no2col(k) = 0.5_rk*(NO2_number_density_column__num_m3(kk) + &
+                           NO2_number_density_column__num_m3(kk+1)) * &
+                           aircol(k) / number_density_air__num_m3
     end do
 
     ! inputs need to be bottom up vert coord
@@ -141,9 +151,12 @@ subroutine tuv_radiation_transfer_init( realkind, errmsg, errflg )
 
     zlev(nlayer+1) = zlev(nlayer) + delz_km ! km
     aircol(nlayer) = delz_cm * 10._rk * press_top / ( kboltz * tlev(nlayer) ) ! molecules / cm2
-    o3col(nlayer)  = o3vmr(1)  * aircol(nlayer)
-    so2col(nlayer) = so2vmr(1) * aircol(nlayer)
-    no2col(nlayer) = no2vmr(1) * aircol(nlayer)
+    o3col(nlayer)  = O3_number_density_column__num_m3(1) * &
+                     aircol(nlayer) / number_density_air__num_m3
+    so2col(nlayer) = SO2_number_density_column__num_m3(1) * &
+                     aircol(nlayer) / number_density_air__num_m3
+    no2col(nlayer) = NO2_number_density_column__num_m3(1) * &
+                     aircol(nlayer) / number_density_air__num_m3
 
     tauaer300=0.0_rk
     tauaer400=0.0_rk

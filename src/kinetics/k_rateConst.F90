@@ -29,15 +29,16 @@ contains
 !> \section arg_table_k_rateConst_run Argument Table
 !! \htmlinclude k_rateConst_run.html
 !!
-  subroutine k_rateConst_run(nkRxt, njRxt, k_rateConst, nd_air, rh, c_h2o, c_o2, temp, p, sad, ad, errmsg, errflg)
-  
+  subroutine k_rateConst_run(nkRxt, njRxt, k_rateConst, nd_air, rh, H2O_number_density__num_m3, O2_number_density__num_m3, &
+                             temp, p, sad, ad, errmsg, errflg)
+
     integer,                   intent(in)  :: nkRxt
     integer,                   intent(in)  :: njRxt  !!!! THIS IS ONLY HERE TO WORKAROUND A BUG IN CPF
     real(kind_phys),           intent(out) :: k_rateConst(:)
     real(kind_phys),           intent(in)  :: nd_air
-    real(kind_phys),           intent(in)  :: rh 
-    real(kind_phys),           intent(in)  :: c_h2o     
-    real(kind_phys),           intent(in)  :: c_o2
+    real(kind_phys),           intent(in)  :: rh
+    real(kind_phys),           intent(in)  :: H2O_number_density__num_m3
+    real(kind_phys),           intent(in)  :: O2_number_density__num_m3
     real(kind_phys),           intent(in)  :: temp
 
     real(kind_phys),           intent(in)  :: p
@@ -53,7 +54,7 @@ contains
     errmsg=''
     errflg=0
 
-    call k_rate_constant(k_rateConst, nd_air, temp, p, sad, ad, c_h2o, c_o2 )
+    call k_rate_constant(k_rateConst, nd_air, temp, p, sad, ad, H2O_number_density__num_m3, O2_number_density__num_m3 )
 
   end subroutine k_rateConst_run
   

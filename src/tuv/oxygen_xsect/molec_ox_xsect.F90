@@ -23,7 +23,9 @@ contains
 !> \section arg_table_molec_ox_xsect_run Argument Table
 !! \htmlinclude molec_ox_xsect_run.html
 !!
-  subroutine molec_ox_xsect_run( nlyr, zen, alt, temp, press_mid, press_top, o2vmr, dto2, srb_o2_xs, errmsg, errflg )
+  subroutine molec_ox_xsect_run( nlyr, zen, alt, temp, press_mid, press_top, &
+      O2_number_density_column__num_m3, number_density_air__num_m3, dto2, srb_o2_xs, &
+      errmsg, errflg )
     use module_xsections, only: o2_xs
     use phot_util_mod, only : sphers, airmas
     use la_srb_mod,    only : la_srb_comp
@@ -35,7 +37,8 @@ contains
     real(kind_phys),  intent(in)    :: temp(:) ! K
     real(kind_phys),  intent(in)    :: press_mid(:)
     real(kind_phys),  intent(in)    :: press_top
-    real(kind_phys),  intent(in)    :: o2vmr(:)
+    real(kind_phys),  intent(in)    :: O2_number_density_column__num_m3(:)
+    real(kind_phys),  intent(in)    :: number_density_air__num_m3
     real(kind_phys),  intent(out)   :: dto2(:,:)
     real(kind_phys),  intent(out)   :: srb_o2_xs(:,:)
     character(len=*), intent(out)   :: errmsg
@@ -64,7 +67,8 @@ contains
 
     dpress(nlyr-1:1:-1) = press_mid(2:nlyr) - press_mid(1:nlyr-1)
     zlev(nlyr:1:-1) = alt(1:nlyr) *1.e-3_rk ! m -> km
-    o2lev(nlyr:1:-1) = o2vmr(1:nlyr)
+    o2lev(nlyr:1:-1) = O2_number_density_column__num_m3(1:nlyr) &
+                       / number_density_air__num_m3
 
     delz_km = zlev(nlyr) - zlev(nlyr-1)
     delz_cm = delz_km*1.e5_rk ! cm

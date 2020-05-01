@@ -144,45 +144,41 @@ end subroutine chemistry_driver_init
 !> \section arg_table_chemistry_driver_run Argument Table
 !! \htmlinclude chemistry_driver_run.html
 !!
-subroutine chemistry_driver_run(vmr, TimeStart, TimeEnd, j_rateConst,  k_rateConst, number_density_air, &
-                                reaction_rates, reaction_rate_constants, errmsg, errflg)
-
-  use kinetics_utilities, only: kinetics_init, kinetics_final
+subroutine chemistry_driver_run(gas_number_density__num_m3, number_density_air__num_m3, TimeStart, TimeEnd, j_rateConst, &
+                                k_rateConst, reaction_rates, reaction_rate_constants, errmsg, errflg)
 
   implicit none
 !-----------------------------------------------------------
 !  these dimension parameters will be set by the cafe/configurator
 !-----------------------------------------------------------
-  real(kind=kind_phys), intent(inout)    :: vmr(:)                ! "working" concentration passed thru CPF
-  real(kind_phys), intent(in)            :: TimeStart, TimeEnd
-  real(kind=kind_phys), intent(in)       :: j_rateConst(:)        ! host model provides photolysis rates for now
-  real(kind=kind_phys), intent(in)       :: k_rateConst(:)        ! host model provides photolysis rates for now
-  real(kind=kind_phys), intent(in)       :: number_density_air    ! number density
-  real(kind=kind_phys), intent(inout)    :: reaction_rates(:)     ! reaction rates at the end of the chemistry time step (1/s)
+  real(kind=kind_phys), intent(inout)    :: gas_number_density__num_m3(:) ! "working" concentration passed thru CPF (#/m3)
+  real(kind=kind_phys), intent(in)       :: number_density_air__num_m3    ! Number density of air (#/m3)
+  real(kind=kind_phys), intent(in)       :: TimeStart, TimeEnd            ! start and end times (s)
+  real(kind=kind_phys), intent(in)       :: j_rateConst(:)                ! host model provides photolysis rates for now
+  real(kind=kind_phys), intent(in)       :: k_rateConst(:)                ! host model provides photolysis rates for now
+  real(kind=kind_phys), intent(inout)    :: reaction_rates(:)             ! reaction rates at the end of the chemistry time step (#/m3/s)
   real(kind=kind_phys), intent(inout)    :: reaction_rate_constants(:)    ! rate constants for each reaction
-  character(len=512), intent(out)        :: errmsg
-  integer, intent(out)                   :: errflg                ! error index from CPF
-  real(kind=kind_phys)                   :: number_density(size(vmr))     ! "working" number density of each molecule
+  character(len=512), intent(out)        :: errmsg                        ! error message from chemistry solver
+  integer, intent(out)                   :: errflg                        ! error index from CPF
 
   !--- initialize CCPP error handling variables
   errmsg = ''
   errflg = 0
 
-  call kinetics_init(vmr, number_density, number_density_air)
-
 !-----------------------------------------------------------
 !  update the kinetics
 !-----------------------------------------------------------
-  call theKinetics%rateConst_update( k_rateConst, j_rateConst, number_density_air )
+  call theKinetics%rateConst_update( k_rateConst, j_rateConst, &
+                                     number_density_air__num_m3 )
 
 !-----------------------------------------------------------
 !  solve the current timestep's chemistry
 !-----------------------------------------------------------
-  call theSolver%Run( Tstart=TimeStart, Tend=TimeEnd, y=number_density, theKinetics=theKinetics, Ierr=errflg )
+  call theSolver%Run( Tstart=TimeStart, Tend=TimeEnd, AbsTolScalingFactor=number_density_air__num_m3, &
+                      y=gas_number_density__num_m3, theKinetics=theKinetics, Ierr=errflg )
 
-  reaction_rates          = theKinetics%reaction_rates(number_density)
+  reaction_rates          = theKinetics%reaction_rates( gas_number_density__num_m3 )
   reaction_rate_constants = theKinetics%reaction_rate_constants( )
-  call kinetics_final(vmr, number_density, number_density_air)
 
   if (errflg /= 0) then
     errmsg = 'chemistry_driver_run: ERROR in theSolver%Run'

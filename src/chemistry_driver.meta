@@ -85,14 +85,22 @@
 [ccpp-arg-table]
   name = chemistry_driver_run
   type = scheme
-[vmr]
-  standard_name = concentration
-  long_name = species concentration
-  units = mole/mole
+[gas_number_density__num_m3]
+  standard_name = gas_number_density
+  long_name = gas species concentration
+  units = molecules/m3
   dimensions = (number_of_chemical_constituents)
   type = real
   kind = kind_phys
   intent = inout
+[number_density_air__num_m3]
+  standard_name = number_density_air
+  long_name = total number density
+  units = molecules/m3
+  dimensions = ()
+  type = real
+  kind = kind_phys
+  intent = in
 [TimeStart]
   standard_name = chem_step_start_time
   long_name = Chem step start time
@@ -122,14 +130,6 @@
   long_name = k rate constants
   units = s-1
   dimensions = (number_of_kinetics_reactions)
-  type = real
-  kind = kind_phys
-  intent = in
-[number_density_air]
-  standard_name = total_number_density
-  long_name = total number density
-  units = molecules/cm3
-  dimensions = ()
   type = real
   kind = kind_phys
   intent = in

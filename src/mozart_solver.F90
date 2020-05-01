@@ -33,7 +33,7 @@ MODULE Mozart_Solver
     REAL(r8) :: Roundoff
     REAL(r8) :: FacRej, FacAcc
     REAL(r8) :: Hmin, Hmax, Hstart
-    REAL(r8), allocatable :: AbsTol(:), RelTol(:)
+    REAL(r8), allocatable :: BaseAbsTol(:), AbsTol(:), RelTol(:)
     logical  :: Autonomous
     logical  :: VectorTol
     CONTAINS
@@ -66,7 +66,7 @@ CONTAINS
     N = size(AbsTol)
     this%N = N
 
-    allocate( this%AbsTol(N),this%RelTol(N) )
+    allocate( this%BaseAbsTol(N),this%AbsTol(N),this%RelTol(N) )
 
     IERR = 0
 
@@ -77,11 +77,11 @@ CONTAINS
 !   For Vector tolerances (ICNTRL(2) == 0) the code uses AbsTol(1:N) and RelTol(1:N)
     IF (ICNTRL(2) == 0) THEN
       this%VectorTol = .TRUE.
-      this%AbsTol(:N) = AbsTol(:N)
+      this%BaseAbsTol(:N) = AbsTol(:N)
       this%RelTol(:N) = RelTol(:N)
     ELSE
       this%VectorTol = .FALSE.
-      this%AbsTol(2:N) = AbsTol(1)
+      this%BaseAbsTol(2:N) = AbsTol(1)
       this%RelTol(2:N) = RelTol(1)
     END IF
 !~~~>   The maximum number of N-R iters per sub-timestep
@@ -169,8 +169,8 @@ CONTAINS
     DO i=1,N
       IF( (AbsTol(i) <= ZERO) .OR. (RelTol(i) <= TEN*this%Roundoff) &
                               .OR. (RelTol(i) >= ONE) ) THEN
-        PRINT * , ' AbsTol(',i,') = ',this%AbsTol(i)
-        PRINT * , ' RelTol(',i,') = ',this%RelTol(i)
+        PRINT * , ' BaseAbsTol(',i,') = ',this%BaseAbsTol(i)
+        PRINT * , ' RelTol(',i,')     = ',this%RelTol(i)
         IERR = -5
         CALL moz_ErrorMsg(-5,Tstart,ZERO,IERR)
         RETURN
@@ -186,20 +186,21 @@ CONTAINS
        write(*,*) 'Hmin,Hmax,Hstart     = ',this%Hmin,this%Hmax,this%Hstart
        write(*,*) 'Fac{Rej,Acc} = ',this%FacRej,this%FacAcc
        write(*,*) 'RelTol       = ',RelTol(:)
-       write(*,*) 'AbsTol       = ',AbsTol(:)
+       write(*,*) 'BaseAbsTol   = ',AbsTol(:)
        write(*,*) ' '
     endif
  
     end subroutine MozartInit
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    subroutine MozartRun( this, Y, Tstart, Tend, T, &
+    subroutine MozartRun( this, AbsTolScalingFactor, Y, Tstart, Tend, T, &
                           theKinetics, istatus, rstatus, Ierr )
 
       class(MozartSolver)     :: this
       integer, intent(out)    :: Ierr
       integer, optional, intent(inout)  :: istatus(:)
       real(r8), optional, intent(inout) :: rstatus(:)
+      real(r8), optional, intent(in)    :: AbsTolScalingFactor
       real(r8), intent(inout)           :: Y(:)
       real(r8), optional, intent(out)   :: T
       real(r8), optional, intent(in)    :: Tstart
@@ -227,6 +228,13 @@ CONTAINS
        .not. present(Tend) ) THEN
      Ierr = -10
      RETURN
+   ENDIF
+
+!~~~> Scale absolute tolerances if necessary
+   IF( present(AbsTolScalingFactor) ) THEN
+     this%AbsTol(:) = AbsTolScalingFactor * this%BaseAbsTol(:)
+   ELSE
+     this%AbsTol(:) = this%BaseAbsTol(:)
    ENDIF
 
    N = this%n

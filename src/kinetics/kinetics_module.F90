@@ -29,7 +29,7 @@ type kinetics_type
   real(kind_phys), allocatable :: MBOdeJac(:)    ! ODE solver jacobian
   real(kind_phys), allocatable :: chemJac(:)     ! chemistry forcing jacobian
   real(kind_phys), allocatable :: rates(:)         ! rates of reactions
-  real(kind_phys)              :: number_density   ! total number density (molecules/cm^3)
+  real(kind_phys)              :: number_density_air__num_m3 ! Total number density of air (#/m3)
 contains
   procedure, public :: init 
   procedure, public :: rateConst_update
@@ -48,35 +48,35 @@ end type kinetics_type
 contains
 
   !---------------------------
-  ! Compute time rate of change of each molecule (vmr) given reaction rates
+  ! Compute time rate of change of each molecule (#/m3) given reaction rates
   !---------------------------
-  function force( this, vmr )
+  function force( this, gas_number_density__num_m3 )
 
     use kinetics_utilities,only :  p_force
 
     class(kinetics_type) :: this
-    real(kind_phys), intent(in)  ::  vmr(:)              ! volume mixing ratios of each component in order
+    real(kind_phys), intent(in)  ::  gas_number_density__num_m3(:)           ! number density of each component in order (#/m3)
 
-    real(kind_phys)              ::  force(size(vmr))    ! rate of change of each molecule
+    real(kind_phys)              ::  force(size(gas_number_density__num_m3)) ! rate of change of each molecule
 
     !force = p_force( vmr, this%rates, this%number_density, this%rateConst )
-    call p_force( this%rateConst, vmr, this%number_density, force)
+    call p_force( this%rateConst, gas_number_density__num_m3, this%number_density_air__num_m3, force)
 
   end function force
 
   !---------------------------
   ! Calculate the rates for each chemical reaction
   !---------------------------
-  function reaction_rates( this, number_density )
+  function reaction_rates( this, number_density__num_m3 )
 
      use kinetics_utilities, only : rxn_rates => reaction_rates, &
                                     nRxn => number_of_reactions
 
      class(kinetics_type), intent(in) :: this
-     real(kind_phys), intent(in)      ::  number_density(:)    ! number densities of each component (#/cm^3)
+     real(kind_phys), intent(in)      ::  number_density__num_m3(:)    ! number densities of each component (#/m^3)
      real(kind_phys)                  ::  reaction_rates(nRxn) ! reaction rates
 
-     reaction_rates = rxn_rates( this%rateConst, number_density, this%number_density )
+     reaction_rates = rxn_rates( this%rateConst, number_density__num_m3, this%number_density_air__num_m3 )
 
   end function reaction_rates
 
@@ -94,17 +94,17 @@ contains
 
   end function reaction_rate_constants
 
-  function dforce_dy( this, vmr)
+  function dforce_dy( this, gas_number_density__num_m3 )
 
     use kinetics_utilities, only : p_dforce_dy=>dforce_dy
     use factor_solve_utilities, only: number_sparse_factor_elements
 
     class(kinetics_type) :: this
-    real(kind_phys), intent(in)  ::  vmr(:)              ! volume mixing ratios of each component in order
+    real(kind_phys), intent(in)  ::  gas_number_density__num_m3(:) ! number densities of each component in order (#/m3)
 
-    real(kind_phys) :: dforce_dy(number_sparse_factor_elements)   ! sensitivity of forcing to changes in each vmr
+    real(kind_phys) :: dforce_dy(number_sparse_factor_elements)   ! sensitivity of forcing to changes in each number density
 
-    call p_dforce_dy(dforce_dy, this%rateConst, vmr, this%number_density)
+    call p_dforce_dy(dforce_dy, this%rateConst, gas_number_density__num_m3, this%number_density_air__num_m3 )
 
   end function dforce_dy
 
@@ -221,19 +221,19 @@ contains
   ! Execute once for the chemistry-time-step advance
   ! Not called from the solver
   !------------------------------------------------------
-  subroutine rateConst_update( this, k_rateConst, j_rateConst, number_density_air )
+  subroutine rateConst_update( this, k_rateConst, j_rateConst, number_density_air__num_m3 )
 
     class(kinetics_type) :: this
     real(kind_phys), intent(in) :: k_rateConst(:) ! externally supplied rate constants
     real(kind_phys), intent(in) :: j_rateConst(:)
-    real(kind_phys), intent(in) :: number_density_air ! total number density
+    real(kind_phys), intent(in) :: number_density_air__num_m3 ! Total number density of air (#/m3)
   
     integer :: i, size_krateConst, size_jrateConst
     
     size_krateConst=size(k_rateConst)
     size_jrateConst=size(j_rateConst)
 
-    this%number_density=number_density_air
+    this%number_density_air__num_m3 = number_density_air__num_m3
 
     associate( rateConstants => this%rateConst )
       ! Rate Constants

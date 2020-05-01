@@ -40,7 +40,7 @@ MODULE Rosenbrock_Solver
     REAL(r8) :: ros_ELO
     REAL(r8) :: ros_A(15), ros_C(15), ros_M(6), ros_E(6), &
                 ros_Alpha(6), ros_Gamma(6)
-    REAL(r8), allocatable :: AbsTol(:), RelTol(:)
+    REAL(r8), allocatable :: BaseAbsTol(:), AbsTol(:), RelTol(:)
     logical  :: Autonomous
     logical  :: VectorTol
     LOGICAL  :: ros_NewF(6)
@@ -76,7 +76,7 @@ CONTAINS
     N = size(AbsTol)
     this%N = N
 
-    allocate( this%AbsTol(N),this%RelTol(N) )
+    allocate( this%BaseAbsTol(N),this%AbsTol(N),this%RelTol(N) )
 
     IERR = 0
 
@@ -88,12 +88,12 @@ CONTAINS
     IF (ICNTRL(2) == 0) THEN
       this%VectorTol = .TRUE.
       this%UplimTol  = N
-      this%AbsTol(:N) = AbsTol(:N)
+      this%BaseAbsTol(:N) = AbsTol(:N)
       this%RelTol(:N) = RelTol(:N)
     ELSE
       this%VectorTol = .FALSE.
       this%UplimTol  = 1
-      this%AbsTol(2:N) = AbsTol(1)
+      this%BaseAbsTol(2:N) = AbsTol(1)
       this%RelTol(2:N) = RelTol(1)
     END IF
 !~~~>   Initialize the particular Rosenbrock method selected
@@ -216,8 +216,8 @@ CONTAINS
     DO i = 1,N
       IF( (AbsTol(i) <= ZERO) .OR. (RelTol(i) <= TEN*this%Roundoff) &
                               .OR. (RelTol(i) >= ONE) ) THEN
-        PRINT * , ' AbsTol(',i,') = ',this%AbsTol(i)
-        PRINT * , ' RelTol(',i,') = ',this%RelTol(i)
+        PRINT * , ' BaseAbsTol(',i,') = ',this%BaseAbsTol(i)
+        PRINT * , ' RelTol(',i,')     = ',this%RelTol(i)
         IERR = -5
         CALL ros_ErrorMsg(-5,Tstart,ZERO,IERR)
         RETURN
@@ -233,18 +233,19 @@ CONTAINS
        write(*,*) 'Hmin,Hmax,Hstart     = ',this%Hmin,this%Hmax,this%Hstart
        write(*,*) 'Fac{Min,Max,Rej,Safe} = ',this%FacMin,this%FacMax,this%FacRej,this%FacSafe
        write(*,*) 'RelTol                = ',RelTol(:)
-       write(*,*) 'AbsTol                = ',AbsTol(:)
+       write(*,*) 'BaseAbsTol            = ',AbsTol(:)
        write(*,*) ' '
     endif
  
     end subroutine RosenbrockInit
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    subroutine RosenbrockRun( this, Y, Tstart, Tend, T, &
+    subroutine RosenbrockRun( this, AbsTolScalingFactor, Y, Tstart, Tend, T, &
                               theKinetics, istatus, rstatus, Ierr )
 
       class(RosenbrockSolver) :: this
       integer, intent(out)    :: Ierr
+      real(r8), optional, intent(in)    :: AbsTolScalingFactor
       real(r8), intent(inout)           :: Y(:)
       integer, optional, intent(inout)  :: istatus(:)
       real(r8), optional, intent(inout) :: rstatus(:)
@@ -272,6 +273,13 @@ CONTAINS
        .not. present(Tend) ) THEN
      Ierr = -10
      RETURN
+   ENDIF
+
+!~~~> Scale absolute tolerances if necessary
+   IF( present(AbsTolScalingFactor) ) THEN
+     this%AbsTol(:) = AbsTolScalingFactor * this%BaseAbsTol(:)
+   ELSE
+     this%AbsTol(:) = this%BaseAbsTol(:)
    ENDIF
 
 !~~~>  Initializations, check incoming time step

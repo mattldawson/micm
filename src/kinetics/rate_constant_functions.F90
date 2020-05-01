@@ -115,10 +115,10 @@ function Troe(params, state) result(rate_constant)
       * exp( -params%C_Kinf / state%temperature) &
       * ( state%temperature / c_300 ) ** params%B_Kinf
 
-  log10_term = log10(k_0 * state%number_density_air / k_inf)
+  log10_term = log10(k_0 * state%number_density_air__num_m3 / k_inf)
   power_of_F =  c_1 + log10_term * log10_term
   
-  rate_constant = k_0 / ( c_1 + k_0 * state%number_density_air / k_inf)  &
+  rate_constant = k_0 / ( c_1 + k_0 * state%number_density_air__num_m3 / k_inf)  &
       *  params%F_C ** ( c_1/power_of_F)
 
 end function Troe
@@ -151,13 +151,13 @@ function Troe_reverse(params, state) result(rate_constant)
       * exp( -params%C_Kinf / state%temperature) &
       * ( state%temperature / c_300 ) ** params%B_Kinf
 
-  log10_term = log10(k_0 * state%number_density_air / k_inf)
+  log10_term = log10(k_0 * state%number_density_air__num_m3 / k_inf)
   power_of_F =  c_1 + log10_term * log10_term
 
   reverse_factor = params%A_r*exp( -params%C_r / state%temperature)
 
   rate_constant = reverse_factor &
-      *  k_0 / ( c_1 + k_0 * state%number_density_air / k_inf) &
+      *  k_0 / ( c_1 + k_0 * state%number_density_air__num_m3 / k_inf) &
       *  params%F_C ** ( c_1/power_of_F)
 
 end function Troe_reverse
@@ -178,10 +178,10 @@ function Troe_chemical_activation(params, state) result(rate_constant)
       * exp( -params%C_Kinf / state%temperature) &
       * ( state%temperature / c_300 ) ** params%B_Kinf
 
-  log10_term = log10(k_0 * state%number_density_air / k_inf)
+  log10_term = log10(k_0 * state%number_density_air__num_m3 / k_inf)
   power_of_F =  c_1 + log10_term * log10_term
 
-  rate_constant = k_0 / ( c_1 + k_0 * state%number_density_air / k_inf) &
+  rate_constant = k_0 / ( c_1 + k_0 * state%number_density_air__num_m3 / k_inf) &
       *  params%F_C ** ( c_1/power_of_F)
 
 end function Troe_chemical_activation
@@ -228,7 +228,7 @@ function combined_CO_OH(params, state) result (rate_constant)
   real :: rate_constant
 
   rate_constant = params%A * &
-      ( c_1 + params%B * boltzman_cgs * state%number_density_air * state%temperature)
+      ( c_1 + params%B * boltzman_cgs * state%number_density_air__num_m3 * state%temperature)
 
 end function combined_CO_OH
 
@@ -253,7 +253,7 @@ function HO2_HO2(params, state) result (rate_constant)
   k0 = params%A_k0 * exp(-params%C_k0 / state%temperature)
   kinf = params%A_kinf * exp(-params%C_kinf / state%temperature)
 
-  fc =  c_1 + params%F * state%number_density_air * state%h2ovmr * exp( -params%C_kinf / state%temperature)
+  fc =  c_1 + params%F * state%H2O_number_density__num_m3 * exp( -params%C_kinf / state%temperature)
   rate_constant = (k0 + kinf) * fc
 
 end function HO2_HO2
@@ -265,8 +265,8 @@ function DMS_OH(params, state) result (rate_constant)
 
   real :: k0, k1
 
-  k0 = c_1 + params%A*exp(-params%B/state%temperature)*state%o2_number_density
-  k1 = params%C*exp(-params%D/state%temperature)*state%o2_number_density
+  k0 = c_1 + params%A*exp(-params%B/state%temperature)*state%O2_number_density__num_m3
+  k1 = params%C*exp(-params%D/state%temperature)*state%O2_number_density__num_m3
   rate_constant = k1/k0
   
 
@@ -283,8 +283,8 @@ function HNO3_OH(params, state) result (rate_constant)
   k1 = params%A_k1 * exp(-params%C_k1 / state%temperature)
   k2 = params%A_k2 * exp(-params%C_k2 / state%temperature)
 
-  rate_constant = k2 + state%number_density_air*k0 / &
-    ( c_1 + state%number_density_air*k0 / k2)
+  rate_constant = k2 + state%number_density_air__num_m3*k0 / &
+    ( c_1 + state%number_density_air__num_m3*k0 / k2)
 
 end function HNO3_OH
 
@@ -297,9 +297,9 @@ function SO2_OH(params, state) result (rate_constant)
   real  f_c, k0, power_of_F, log_term_in_power
 
   f_c = params%A * (300./state%temperature)**params%B
-  k0 = f_c*state%number_density_air / (c_1 + f_c * state%number_density_air/params%C)
+  k0 = f_c*state%number_density_air__num_m3 / (c_1 + f_c * state%number_density_air__num_m3/params%C)
 
-  log_term_in_power = log10(f_c*state%number_density_air)-log10(params%C)
+  log_term_in_power = log10(f_c*state%number_density_air__num_m3)-log10(params%C)
   power_of_F = c_1 / ( c_1 +  log_term_in_power*log_term_in_power)
 
   rate_constant = k0*params%F**power_of_F
@@ -311,7 +311,7 @@ function MCO3_NO2(params, state) result (rate_constant)
   type(environmental_state_type), intent(in) :: state
   real :: rate_constant
 
-  rate_constant = params%A / state%number_density_air * 300. / state%temperature
+  rate_constant = params%A / state%number_density_air__num_m3 * 300. / state%temperature
 
 end function MCO3_NO2
 
@@ -323,7 +323,7 @@ function MPAN_M(params, state) result (rate_constant)
 
   real :: k_f, k_r
 
-  k_f = params%A_f / state%number_density_air * 300. / state%temperature
+  k_f = params%A_f / state%number_density_air__num_m3 * 300. / state%temperature
   k_r = params%A_r * exp(-params%B_r / state%temperature)
  
   rate_constant = k_r * k_f

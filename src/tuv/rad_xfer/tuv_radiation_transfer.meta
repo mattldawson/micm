@@ -89,27 +89,35 @@
   type = real
   kind = kind_phys
   intent = in
-[o3vmr]
-  standard_name = o3_vmr_col
-  long_name = O3 volume mixing ratio column
-  units = mole/mole
+[O3_number_density_column__num_m3]
+  standard_name = O3_number_density_column
+  long_name = O3 number density column
+  units = molecules/m3
   dimensions = (vertical_layer_dimension)
   type = real
   kind = kind_phys
   intent = in
-[so2vmr]
-  standard_name = so2_vmr_col
-  long_name = SO2 volume mixing ratio column
-  units = mole/mole
+[SO2_number_density_column__num_m3]
+  standard_name = SO2_number_density_column
+  long_name = SO2 number density column
+  units = molecules/m3
   dimensions = (vertical_layer_dimension)
   type = real
   kind = kind_phys
   intent = in
-[no2vmr]
-  standard_name = no2_vmr_col
-  long_name = NO2 volume mixing ratio column
-  units = mole/mole
+[NO2_number_density_column__num_m3]
+  standard_name = NO2_number_density_column
+  long_name = NO2 number density column
+  units = molecules/m3
   dimensions = (vertical_layer_dimension)
+  type = real
+  kind = kind_phys
+  intent = in
+[number_density_air__num_m3]
+  standard_name = number_density_air
+  long_name = Total number density of air
+  units = molecules/m3
+  dimensions = ()
   type = real
   kind = kind_phys
   intent = in

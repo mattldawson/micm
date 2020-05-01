@@ -68,11 +68,19 @@
   type = real
   kind = kind_phys
   intent = in
-[o2vmr]
-  standard_name = o2_vmr_col
+[O2_number_density_column__num_m3]
+  standard_name = O2_number_density_column
   long_name = O2 volume mixing ratio column
-  units = mole/mole
+  units = molecules/m3
   dimensions = (vertical_layer_dimension)
+  type = real
+  kind = kind_phys
+  intent = in
+[number_density_air__num_m3]
+  standard_name = number_density_air
+  long_name = Total number density of air
+  units = molecules/m3
+  dimensions = ()
   type = real
   kind = kind_phys
   intent = in

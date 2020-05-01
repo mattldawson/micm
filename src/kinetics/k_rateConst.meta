@@ -22,9 +22,9 @@
   kind = kind_phys
   intent = out
 [nd_air]
-  standard_name = total_number_density
+  standard_name = number_density_air
   long_name = total number density
-  units = molecules/cm3
+  units = molecules/m3
   dimensions = ()
   type = real
   kind = kind_phys
@@ -37,18 +37,18 @@
   type = real
   kind = kind_phys
   intent = in
-[c_h2o]
-  standard_name = water_vapor
-  long_name = water_vapor
-  units = mole/mole
+[H2O_number_density__num_m3]
+  standard_name = water_number_density
+  long_name = water vapor number density
+  units = molecules/m3
   dimensions = ()
   type = real
   kind = kind_phys
   intent = in
-[c_o2]
-  standard_name = oxygen
-  long_name = molecular_oxygen
-  units = mole/mole
+[O2_number_density__num_m3]
+  standard_name = oxygen_number_density
+  long_name = molecular oxygen number density
+  units = molecules/m3
   dimensions = ()
   type = real
   kind = kind_phys
